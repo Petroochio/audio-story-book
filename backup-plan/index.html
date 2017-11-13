@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8"/>
+    <meta name="description" content="Telling Board" />
+    <meta name="author" content="Peter and Denise" />
+    <meta name="robots" content="index,follow" />
+    <title>Telling</title>
+    <!-- <link rel="stylesheet" type="text/css" href="src/scss/main.css"/> -->
+    <!-- <link href="https://fonts.googleapis.com/css?family=Lato:400,900" rel="stylesheet"/> -->
+    <style></style>
+  </head>
+  <body>
+    Tell Me A Story!
+  </body>
+  <script src="/lib/recorder.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var prevTime = null;
+    var audio_context;
+    var recorder;
+    var socket;
+
+    function startUserMedia(stream) {
+      var input = audio_context.createMediaStreamSource(stream);
+      // Uncomment if you want the audio to feedback directly
+      //input.connect(audio_context.destination);
+      
+      recorder = new Recorder(input);
+    }
+
+    function startRecording() {
+      recorder.clear();
+      recorder && recorder.record();
+    }
+
+    function stopRecording() {
+      recorder && recorder.stop();
+      
+      // create WAV download link using audio data blob
+    }
+
+    var playSource;
+    var isPlaying = false;
+
+    function playRecording() {
+      isPlaying = true;
+      playSource = audio_context.createBufferSource();
+      playSource.addEventListener('ended', function() { isPlaying = false; console.log('end'); });
+
+      recorder.getBuffer(function(buffers) {
+        var newBuffer = audio_context.createBuffer(2, buffers[0].length, audio_context.sampleRate);
+        newBuffer.getChannelData(0).set(buffers[0]);
+        newBuffer.getChannelData(1).set(buffers[1]);
+        playSource.buffer = newBuffer;
+
+        playSource.connect(audio_context.destination);
+        playSource.start(0);
+        sourceLoaded = true;
+      });
+    }
+
+    window.onload = function() {
+      // window.AudioContext = window.AudioContext || window.webkitAudioContext;
+      // navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia;
+      audio_context = new AudioContext;
+
+      socket = io();
+      navigator.getUserMedia({audio: true}, startUserMedia, function(e) {
+        console.log(':P');
+      });
+
+      socket.on('record', function() {
+        startRecording();
+        console.log('start')
+      });
+
+      socket.on('stop', function() {
+        stopRecording();
+        console.log('stop')
+      });
+
+      socket.on('play', function() {
+        if (!isPlaying) {
+          playRecording();
+          console.log('play');
+        }
+      });
+
+    }
+  </script>
+</html>
