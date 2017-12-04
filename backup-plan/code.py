@@ -1,14 +1,19 @@
-import touchio
+from digitalio import DigitalInOut, Direction, Pull
 import board
 import time
   
-touch1 = touchio.TouchIn(board.A1)
-touch2 = touchio.TouchIn(board.A2)
+button1 = DigitalInOut(board.BUTTON_A)
+button1.direction = Direction.INPUT
+button1.pull = Pull.DOWN
+
+button2 = DigitalInOut(board.BUTTON_B)
+button2.direction = Direction.INPUT
+button2.pull = Pull.DOWN
   
 while True:
-    if touch1.value:
+    if button2.value:
         print("r")
-    elif touch2.value:
+    elif button1.value:
         print("p")
     else:
         print("s")
